@@ -4,7 +4,7 @@ This is a collection of scripts and configuration files for getting a [Valheim d
 
 These are designed to run locally on a controller computer that has a minimal set of requirements, and configure a remote host computer that will run the Valheim server.
 
-These can be run directly on the remote host. See the [Running Locally section](#running-locally).
+These can be run directly on the remote host.
 
 ## Requirements
 
@@ -308,6 +308,26 @@ A description of the steps performed by `install.sh`:
 How long this takes largely depends on the internet connection to the remote host. Valheim is about 1 GB itself, so depending on the internet available to the remote host, it can take anywhere from 5 minutes to hours. The script has lots of messages to make it clear what steps are being performed. The one big downside is that, currently, the process for downloading and installing Valheim waits until after it's been downloaded to report any progress.
 
 Once the script completes, check out the [Playing section](#playing) for instructions on how to find the server in the in-game server browser.
+
+### Running Locally
+
+These scripts can be run directly on the remote host. In this scenario, the remote host would double as the controller.
+
+LXD has the concept of "remotes" which are LXD servers that can be connected to with the [LXD Client][], `lxc`.
+
+Fortunately, when LXD is installed on the remote host in the [Install LXD section](#install-lxd), the LXD server on the remote host is added as a remote named `local`, in the LXD Client configuration that is on the remote host.
+
+When running the scripts on the remote host, using the name `local` as the name of the remote computer would cause the scripts to connect to the LXD server running on the remote host.
+
+To use `local` as the remote computer's name in all the scripts, create a file called `extra_vars.sh` in the same directory as the `vars.sh` file, and add the following line to it:
+
+```sh
+export REMOTE_NAME="local"
+```
+
+Anywhere this guide talks about a remote computer, use the name `local` instead.
+
+Once this is done, continue with the [Setting Up Controller section](#setting-up-controller).
 
 ### Configure Auto-Update Time
 
