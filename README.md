@@ -44,13 +44,13 @@ sudo snap install core
 sudo snap install lxd
 ```
 
-_note: only `snapd` is not installed by default. the others are given for completeness_
+_note: only `snapd` is not installed by default. The others are given for completeness._
 
 ### Installing LXD
 
-[LXD][] provides both `lxd`, which is what runs on the remote computer, and `lxc`, which is what these scripts use to configure the server. `lxc` can run on a local computer, or on the remote computer. For running these scripts directly on the remote computer, first follow this section to ensure the remote computer is setup, and then go to the [Running Locally](#running-locally).
+[LXD][] provides both `lxd`, which is what runs on the remote computer, and `lxc`, which is what these scripts use to configure the server. `lxc` can run on a local computer, or on the remote computer. Whichever computer will be running the Valheim server will need LXD installed.
 
-For setting up the remote computer, first, install LXD. [The website has installation instructions for all the supported Linux distributions][install lxd]. On Debian and Ubuntu, it looks like this:
+[The LXD website has installation instructions for all the supported Linux distributions][install lxd]. On Debian and Ubuntu, it looks like this:
 
 ```sh
 sudo apt install snapd
@@ -68,7 +68,7 @@ I developed these scripts with `lxd 4.11`, but most of the features used are par
 
 For greater control over selecting exactly which version of LXD you want to install, and control over when it's updated, [check out this forum post from the LXD maintainers][control lxd version].
 
-Once LXD is installed on the remote computer, log in as the root user, and run `lxd init`.
+Once LXD is installed, log in as the root user, and run `lxd init`.
 
 On some distributions, `lxd` can only be interracted with from a user that's a member of a group named `lxd`, and the installation process may not create this group, nor add the current user to that group. Fortunately, the root user is permitted access. Additionally, any user who is a part of the `lxd` group can use it to gain root privileges on the host system, so it may be preferable to perform the relatively short and one-time step of configuring `lxd` by logging in as the root user.
 
@@ -166,7 +166,7 @@ Where `TIMEZONE` is a name in TZ Database format. To get a list of these names, 
 
 Next, setup the local computer that will run the scripts. If instead you want to run them directly on the remote host, check out the [Running Locally](#running-locally), then return here.
 
-On most Linux distributions, [installing `lxd`][install lxd] will also install `lxc`. Additionally, ensure `jq`, `date`, and `basename` are available. Each of the following commands should print out something that looks like what's in the comment below them:
+On most Linux distributions, [installing `lxd`][install lxd] will also install `lxc`. Additionally, ensure [`jq`][], `date`, and `basename` are available. Each of the following commands should print out something that looks like what's in the comment below them:
 
 ```sh
 lxc version
@@ -192,8 +192,8 @@ If an error is printed about a missing command, that utility needs to be install
 
 - `lxc` is the LXD Client ([installation instructions][install lxd])
 - `sh` can be any of `zsh`, `bash`, `ksh`, `ash`, `dash`, and `posh v0.14.1` or higher
-- `jq`: in most package managers ([downloads if not on Linux][download jq])
-- `basename` and `date` are bundled into GNU CoreUtils, which is named slightly differently between Linux distributions
+- `jq`: [installation instructions][download jq]
+- `basename` and `date` are bundled into GNU CoreUtils (most Linux distribution package repositories include it, but it is named slightly differently between Linux distributions)
 
 If all of those are working, then you're ready to go to the [Use section](#use).
 
@@ -201,7 +201,7 @@ If on Windows, the following section describes how to run these scripts from Win
 
 #### Windows
 
-With `lxc` and `jq` having downloads for Windows, probably the easiest way to get a shell interpreter and GNU CoreUtils is with the [Git for Windows][] distribution. This has the advantage of including `git`, which makes it very easy to download the scripts and files.
+With [`lxc`][win lxc] and [`jq`][] having downloads for Windows, probably the easiest way to get a shell interpreter and GNU CoreUtils is with the [Git for Windows][] distribution. This has the advantage of including `git`, which makes it very easy to download the scripts and files.
 
 Alteratively, [cygwin][] provides a lot of the same tools.
 
@@ -490,15 +490,19 @@ config:
   limits.cpu: 1-7
 ```
 
-Again, this is probably not going to result much of a gain in performance, especially for a small number of players.
+The format for this configuration line is described in [the LXD documentation][lxd cpu limits].
+
+Again, this is probably not going to result in much of a gain in performance, especially for a small number of players.
 
 ## Playing
 
 Once the server is up and running, it should show up in the in-game server browser.
 
-If it doesn't this is likely because the remote host is not directly accessible from the internet. By default, Valheim uses ports 2456, 2457, and 2458. The remote host is configured to forward these to the container, but the data needs to be able to reach the remote host in the first place.
+If it doesn't this is likely because the remote host is not directly accessible from the internet.
 
-The remote host was already accessible, at least on port 443, in order to configure it. In my experience, sometimes the Valheim server will show up in the in-game browser, but I am unable to connect. This seemed to be caused by the default firewall configuration on the remote host. I settled with disabling the firewall, though I don't recommend such a heavy-handed approach for everyone.
+By default, Valheim uses ports 2456, 2457, and 2458. The `install.sh` script configures remote host to forward these to the container, but the data needs to be able to reach the remote host in the first place.
+
+In my experience, sometimes the Valheim server will show up in the in-game browser, but I am unable to connect. This seemed to be caused by the default firewall configuration on the remote host. I settled with disabling the firewall, though I don't recommend such a heavy-handed approach for everyone.
 
 [ms store ubuntu 20.04]: <https://www.microsoft.com/store/apps/9n6svws3rx71> "Ubuntu in the Microsoft Store"
 [wsl]: <https://aka.ms/wsl> "Main website for the Windows Subsystem for Linux"
@@ -519,3 +523,4 @@ The remote host was already accessible, at least on port 443, in order to config
 [lxd snapshots]: <https://linuxcontainers.org/lxd/docs/master/instances#snapshot-scheduling> "LXD documentation on scheduling snapshots"
 [`systemd` `OnCalendar` directive]: <https://www.freedesktop.org/software/systemd/man/systemd.timer.html#OnCalendar=> "systemd's documentation for OnCalendar"
 [oncalendar format]: <https://www.freedesktop.org/software/systemd/man/systemd.time.html#Calendar%20Events> "Description of the format used to describe Calendar events in systemd"
+[lxd cpu limits]: <https://linuxcontainers.org/lxd/docs/master/instances#cpu-limits> "Documentation on limiting the CPU resource for containers managed through LXD"
