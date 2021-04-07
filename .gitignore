@@ -1,0 +1,13 @@
+# Valheim database files
+*.fwl
+*.db
+
+# Custom settings
+extra_vars.sh
+#environment.yaml
+
+# Editor
+Session.vim
+
+# git
+commit_message.txt

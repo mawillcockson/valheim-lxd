@@ -1,0 +1,14 @@
+# vim: set syntax=systemd:
+# This unit file has substantial parts overridden by files created by install.sh
+# See the following link for more info:
+# https://www.freedesktop.org/software/systemd/man/systemd.unit.html#id-1.14.3
+[Unit]
+Description=Applies updates to the Valheim server and restarts it
+Documentation=https://github.com/mawillcockson/valheim-lxd/
+Documentation=https://github.com/lloesche/valheim-server-docker
+
+[Timer]
+OnCalendar=1970-01-01
+
+[Install]
+WantedBy=default.target

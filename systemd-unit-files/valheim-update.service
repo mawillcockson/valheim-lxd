@@ -1,0 +1,16 @@
+# vim: set syntax=systemd:
+# This unit file has substantial parts overridden by files created by install.sh
+# See the following link for more info:
+# https://www.freedesktop.org/software/systemd/man/systemd.unit.html#id-1.14.3
+[Unit]
+Description=Update and restart Valheim Dedicated Server
+Documentation=https://github.com/mawillcockson/valheim-lxd/
+
+[Service]
+Type=oneshot
+Environment=XDG_RUNTIME_DIR=""
+ExecStartPre=systemctl --user --no-ask-password stop valheim.service
+ExecStartPre=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished stopping valheim"'
+ExecStart=false
+ExecStartPost=systemctl --user --no-ask-password start valheim.service
+ExecStartPost=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished starting valheim"'

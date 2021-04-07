@@ -1,0 +1,21 @@
+# vim: set syntax=systemd:
+# This unit file has substantial parts overridden by files created by install.sh
+# See the following link for more info:
+# https://www.freedesktop.org/software/systemd/man/systemd.unit.html#id-1.14.3
+[Unit]
+Description="Valheim dedicated server"
+Documentation=https://github.com/mawillcockson/valheim-lxd/
+Documentation=https://github.com/lloesche/valheim-server-docker
+StartLimitIntervalSec=240
+StartLimitBurst=3
+
+[Service]
+Type=exec
+Environment=LD_LIBRARY_PATH=""
+Environment=SteamAppId=0
+ExecStart=false
+TimeoutStopSec=60
+Restart=always
+
+[Install]
+WantedBy=default.target

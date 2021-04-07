@@ -1,0 +1,37 @@
+config:
+  boot.autostart: true
+  boot.autostart.delay: 5
+  boot.host_shutdown_timeout: 10
+  limits.cpu.allowance: 95%
+  limits.memory: 90%
+  limits.memory.enforce: hard
+  limits.memory.swap: false
+  limits.processes: 500
+  security.protection.delete: true
+  snapshots.schedule: "0 5 * * *"
+  snapshots.schedule.stopped: false
+  snapshots.expiry: 1w
+  user.user-data: |-
+    #cloud-config
+    write-files:
+      # This adds a conditional check to running the systemd-remount-fs
+      # service, preventing this bug:
+      # https://discuss.linuxcontainers.org/t/default-ubuntu-20-04-image-contains-failed-systemd-job/9598
+      - path: /etc/systemd/system/systemd-remount-fs.service.d/not_in_containers.conf
+        content: |
+          [Service]
+          ConditionVirtualization=!container
+        owner: "root:root"
+        permissions: "0644"
+    locale: en_US.UTF-8
+devices:
+  proxy:
+    # These will be updated during installation
+    # For more info, see
+    # https://discuss.linuxcontainers.org/t/forward-port-80-and-443-from-wan-to-container/2042
+    connect: "udp:127.0.0.1:2456-2458"
+    listen: "udp:0.0.0.1:2456-2458"
+    type: proxy
+description: "valheim server"
+name: valheim
+used_by: []
