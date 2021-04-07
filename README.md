@@ -29,7 +29,7 @@ These scripts have two dependencies, in addition to the LXD Client, `lxc`:
 - [`jq`][]
 - a POSIX shell (`bash`, `zsh`, `ksh`, etc. all work)
 
-Unfortunately, PowerShell on Windows does not fulfil the second requirement. See the [Windows section](#windows) for help on setting up Windows to run the scripts.
+Unfortunately, PowerShell on Windows does not fulfil the second requirement. The [Windows section](#windows) describes how to set up Windows to run the scripts.
 
 Additionally, the `date` and `basename` utilities are needed, but those commands are rarely missing from a POSIX-compliant shell.
 
@@ -48,7 +48,7 @@ _note: only `snapd` is not installed by default. the others are given for comple
 
 ### Installing LXD
 
-[LXD][] provides both `lxd`, which is what runs on the remote computer, and `lxc`, which is what these scripts use to configure the server. `lxc` can run on a local computer, or on the remote computer. For running these scripts directly on the remote computer, first follow this section to ensure the remote computer is setup, and then see [Running Locally](#running-locally).
+[LXD][] provides both `lxd`, which is what runs on the remote computer, and `lxc`, which is what these scripts use to configure the server. `lxc` can run on a local computer, or on the remote computer. For running these scripts directly on the remote computer, first follow this section to ensure the remote computer is setup, and then go to the [Running Locally](#running-locally).
 
 For setting up the remote computer, first, install LXD. [The website has installation instructions for all the supported Linux distributions][install lxd]. On Debian and Ubuntu, it looks like this:
 
@@ -144,11 +144,11 @@ No other inbound ports are required, just those 4 ports. Feel free to disable al
 
 The storage pool is created by default on the remote host's filesystem, and is managed by LXD. A storage pool with a freshly installed and configured container takes about 2.93 GB, which includes the Valheim server software. The host will need about 2.5 to 3 GB of memory to support about 2 to 4 people. 2 CPU cores seems to be adequate until a lot of the map has been explored.
 
-You may see some improvement in performance if you pin CPUs in LXD, but I haven't noticed a difference. Nevertheless, the [CPU Pinning section](#cpu-pinning) explains how to do this, if you wish to.
+You may experience some improvement in performance if you pin CPUs in LXD, but I haven't noticed a difference. Nevertheless, the [CPU Pinning section](#cpu-pinning) explains how to do this, if you wish to.
 
 It's probably also a good idea to configure the host's time and date: the scripts by default configure backups of the entire container, and for the Valheim server software to be updated, both at approximately 5:00 AM.
 
-_Note: The auto-updating and snapshotting can be disabled. See the [Disable Auto-Update section](#disable-auto-update). It's still a good idea to configure the host's time zone to ensure the logs have the right times_
+_Note: The auto-updating and snapshotting can be disabled. The [Disable Auto-Update section](#disable-auto-update) describes how to do this. It's still a good idea to configure the host's time zone to ensure the logs have the right times_
 
 That will happen whenever the remote host thinks it's 5:00 AM. Check the time with the `date` command on the remote host. If that time is not your local time, the server my reboot while you're logged in. No data would be lost, but it would be annoying.
 
@@ -164,7 +164,7 @@ Where `TIMEZONE` is a name in TZ Database format. To get a list of these names, 
 
 ### Setting Up Controller
 
-Next, setup the local computer that will run the scripts. If instead you want to run them directly on the remote host, see [Running Locally](#running-locally).
+Next, setup the local computer that will run the scripts. If instead you want to run them directly on the remote host, check out the [Running Locally](#running-locally), then return here.
 
 On most Linux distributions, [installing `lxd`][install lxd] will also install `lxc`. Additionally, ensure `jq`, `date`, and `basename` are available. Each of the following commands should print out something that looks like what's in the comment below them:
 
@@ -197,7 +197,7 @@ If an error is printed about a missing command, that utility needs to be install
 
 If all of those are working, then you're ready to go to the [Use section](#use).
 
-If on Windows, see the following section about running these scripts from Windows.
+If on Windows, the following section describes how to run these scripts from Windows.
 
 #### Windows
 
