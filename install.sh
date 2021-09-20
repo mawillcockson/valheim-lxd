@@ -51,7 +51,7 @@ lxd init
 
 For the last command, answer 'yes' to remote, using the default port of 8443
 
-The IP address of the remote computer is needed. To find it, run any one of the following commands:
+The IP address of the remote computer is needed. To find it, run any one of the following commands, on the remote computer:
 
 wget -4qO- https://api.ipify.org
 curl -sS4  https://api.ipify.org
@@ -135,8 +135,8 @@ else
     log "Checking for remote environment profile named '${ENVIRONMENT_PROFILE_NAME}'"
     if ! lxc profile list "${REMOTE_NAME}:" --format json \
         | jq -re "map(.name == \"${ENVIRONMENT_PROFILE_NAME}\") | any" > /dev/null 2>&1; then
-        error "Missing environment.yaml, and no profile on remote \
-               '${REMOTE_NAME}:' named '${ENVIRONMENT_PROFILE_NAME}'
+        error "Missing environment.yaml, and no profile on remote" \
+               "'${REMOTE_NAME}:' named '${ENVIRONMENT_PROFILE_NAME}'
 Please see the README for information on the environment.yaml file"
         exit 1
     fi
@@ -208,7 +208,7 @@ log "Creating account for '${STEAM_USER_NAME}'"
 
 log "Checking if STEAM_USER_UID and STEAM_USER_GID are set"
 if { [ -n "${STEAM_USER_UID:+"set"}" ] && [ -z "${STEAM_USER_GID:+"unset"}" ] ; } \
-    || { [ -z "${STEAM_USER_UID:+"unset"}" ] && [ -n "${STEAM_USER_UID:+"set"}" ] ; }
+    || { [ -z "${STEAM_USER_UID:+"unset"}" ] && [ -n "${STEAM_USER_GID:+"set"}" ] ; }
     then
     error "both STEAM_USER_UID and STEAM_USER_GID need to be set, or both need to be left unset"
     exit 1
@@ -300,10 +300,29 @@ if [ -z "\${XDG_RUNTIME_DIR:+"unset"}" ]; then
 export XDG_RUNTIME_DIR='%s'
 " "\${XDG_RUNTIME_DIR}" >> /usr/local/bin/vars.sh
 fi
+EOF
 
+# NOTE: until lingering is enabled and the systemd user daemon is started, if
+# the user is not logged in, the daemon isn't running.
+# lxc login '${REMOTE_NAME}:${CONTAINER_NAME}' --env USER='${STEAM_USER_NAME}'
+# works because /bin/login starts the systemd user daemon
+# exec-ing /bin/sh does not
+log "Enable and start systemd user service manager for '${STEAM_USER_NAME}'"
+lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- loginctl --no-ask-password enable-linger "${STEAM_USER_NAME}"
 
-log "Running edited vars.sh..."
+log "Start user systemd manager"
+lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- systemctl --no-ask-password restart "user@${STEAM_USER_UID}.service"
+
+log "Setting passwords for root, ubuntu, and ${STEAM_USER_NAME} users to blank..."
+lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- chpasswd -c NONE << EOF
+root:
+ubuntu:
+${STEAM_USER_NAME}:
+EOF
+
+lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- sudo -u "${STEAM_USER_NAME}" /bin/sh << EOF
 . /usr/local/bin/vars.sh
+log "Running edited vars.sh..."
 
 log "Checking if variables were set appropriately..."
 if [ "x${STEAM_USER_UID}x" != "x\${STEAM_USER_UID}x" ]; then
@@ -321,22 +340,9 @@ elif [ -z "\${XDG_RUNTIME_DIR:+"unset"}" ] ||
     then
     # XDG_RUNTIME_DIR was written to vars.sh, and that was sourced, and
     # XDG_RUNTIME_DIR is not set after sourcing it
-    error "XDG_RUNTIME_DIR written incorrectly"
+    error "setting XDG_RUNTIME_DIR in the container did not work"
     exit 1
 fi
-EOF
-
-log "Enable and start systemd user service manager for '${STEAM_USER_NAME}'"
-lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- loginctl --no-ask-password enable-linger "${STEAM_USER_NAME}"
-
-log "Start user systemd manager"
-lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- systemctl --no-ask-password restart "user@${STEAM_USER_UID}.service"
-
-log "Setting passwords for root, ubuntu, and ${STEAM_USER_NAME} users to blank..."
-lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- chpasswd -c NONE << EOF
-root:
-ubuntu:
-${STEAM_USER_NAME}:
 EOF
 
 log "Configuring user '${STEAM_USER_NAME}' filesystem"
@@ -462,6 +468,8 @@ lxc exec "${REMOTE_NAME}:${CONTAINER_NAME}" -- sudo -u "${STEAM_USER_NAME}" /bin
 set -eu
 . /usr/local/bin/vars.sh
 
+need_command ps
+
 log "Installing Valheim Dedicated Server
 This will probably take a while"
 
@@ -476,18 +484,33 @@ systemctl --user --no-ask-password daemon-reload
 log "Starting installation log watcher..."
 journalctl -fo cat --user-unit=valheim-update.service &
 LOG_WATCH="\$!"
-if [ "$?" -ne 0 ]; then
-    error "could not start log watcher"
+tail -F ~/.steam/logs/stderr.txt &
+STEAM_WATCH="\$!"
+sleep 0.5 # wait to see if the watchers stop
+if ! { ps --pid "\${LOG_WATCH}" > /dev/null 2>&1 && ps --pid "\${STEAM_WATCH}" > /dev/null 2>&1 ; } ; then
+    error "could not start log watchers"
     exit 1
 fi
+
+stop_watchers() {
+    if [ -n "\${LOG_WATCH:+"set"}" ]; then
+        kill "\${LOG_WATCH}" > /dev/null 2>&1 || true
+    fi
+    if [ -n "\${STEAM_WATCH:+"set"}" ]; then
+        kill "\${STEAM_WATCH}" > /dev/null 2>&1 || true
+    fi
+}
+
+trap stop_watchers EXIT
 
 log "Starting Valheim Dedicated Server installation..."
 if ! systemctl --user --wait --no-ask-password start valheim-update.service; then
     error "Error installing Valheim Dedicated Server"
-    kill "\${LOG_WATCH}"
     exit 1
 fi
-kill "\${LOG_WATCH}"
+
+trap - EXIT
+stop_watchers
 
 log "Remove temporary override"
 rm "${TEMPORARY_OVERRIDE_FILE}"
@@ -511,6 +534,10 @@ EOF
 
 log "Adding scripts..."
 for file in update_valheim.sh watch_valheim_logs.sh show_valheim_logs.sh; do
+    if ! [ -r "./scripts/${file}" ]; then
+        error "Cannot find upload script: './script/${file}'"
+        exit 1
+    fi
     log "Uploading '${file}'..."
     lxc file push "./scripts/${file}" "${REMOTE_NAME}:${CONTAINER_NAME}/usr/local/bin/${file}" \
         --mode 0755 \
@@ -596,24 +623,26 @@ To log in as the steam user named '${STEAM_USER_NAME}', use the installed lxc al
 
 lxc ${LOGIN_ALIAS_NAME} '${REMOTE_NAME}:${CONTAINER_NAME}' --env USER=${STEAM_USER_NAME}
 
-To add someone to the admin list, watch the server log for line like:
+To add someone to the admin list, watch the server log for a line like the following, as that person logs into the world:
 
 (Filename: ./Runtime/Export/Debug/Debug.bindings.h Line: 35)
 02/23/2021 14:58:04: Got session request from <long string of numbers>
 
-This is your steam ID. To find it another way, visit a site like:
+The long string of numbers is that person's steam ID. To find it another way, visit a site like:
 https://steamdb.info/calculator/
 
-paste the url to your steamcommunity.com profile, and copy the SteamID
+paste the url to the person's steamcommunity.com profile, and copy the SteamID
 
 Then, edit the adminlist.txt in the worlds folder:
 
 lxc exec '${REMOTE_NAME}:${CONTAINER_NAME}' -- runuser -u '${STEAM_USER_NAME}' -- nano '${VALHEIM_WORLD_DIR}/adminlist.txt'
 
-Add the SteamID on a new line.
+Add the SteamID on a new line, Ctr-S to save, and Ctrl-X to exit the editor.
 
 For more info, see:
 
 https://github.com/lloesche/valheim-server-docker#admin-commands
+
+Note that in recent version of the game, the game client (not the game server) must have '-console' added to the Steam launch options in order to use the in-game console.
 "
 log "Installation finished"

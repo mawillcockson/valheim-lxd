@@ -10,7 +10,7 @@ Documentation=https://github.com/mawillcockson/valheim-lxd/
 Type=oneshot
 Environment=XDG_RUNTIME_DIR=""
 ExecStartPre=systemctl --user --no-ask-password stop valheim.service
-ExecStartPre=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished stopping valheim"'
+ExecStartPre=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished stopping valheim game"'
 ExecStart=false
 ExecStartPost=systemctl --user --no-ask-password start valheim.service
-ExecStartPost=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished starting valheim"'
+ExecStartPost=/bin/sh -c '. /usr/local/bin/vars.sh; log "Finished starting valheim game"'

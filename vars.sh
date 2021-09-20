@@ -2,8 +2,10 @@
 set -eu
 
 set +e
-command -v command > /dev/null
-[ "$?" -ne 0 ] && echo "shell builtin 'command' not posix compliant" && exit 1
+if ! command -v command > /dev/null ; then
+    echo "shell builtin 'command' not posix compliant"
+    exit 1
+fi
 # Happens on posh < 0.14.1
 set -e
 
@@ -91,8 +93,8 @@ export VALHEIM_AUTO_UPDATE_SCHEDULE="${VALHEIM_AUTO_UPDATE_SCHEDULE:-"*-*-* 05:1
 
 ### Almost definitely don't need to change these
 export REMOTE_NAME="${REMOTE_NAME:-"valheim"}"
-export CONTAINER_NAME="${CONTAINER_NAME:-"${REMOTE_NAME}"}"
-export PROFILE_NAME="${PROFILE_NAME:-"${REMOTE_NAME}"}"
+export CONTAINER_NAME="${CONTAINER_NAME:-"valheim"}"
+export PROFILE_NAME="${PROFILE_NAME:-"${CONTAINER_NAME}"}"
 export ENVIRONMENT_PROFILE_NAME="${ENVIRONMENT_PROFILE_NAME:-"${PROFILE_NAME}-environment"}"
 export TEMPORARY_PROFILE_NAME="${TEMPORARY_OVERRIDE_FILE_NAME:-"${PROFILE_NAME}-temporary"}"
 export FIRST_SNAPSHOT_NAME="${FIRST_SNAPSHOT_NAME:-"right-after-installation"}"
@@ -116,11 +118,11 @@ export OVERRIDE_FILE_NAME="${OVERRIDE_FILE_NAME:-"10-override.conf"}"
 export TEMPORARY_OVERRIDE_FILE_NAME="${TEMPORARY_OVERRIDE_FILE_NAME:-"90-temp.conf"}"
 
 log() {
-    echo "${LOG_PREFIX-}${LOG_PREFIX:+ }""${@-}"
+    printf '%s%s%s\n' "${LOG_PREFIX-}" "${LOG_PREFIX:+" "}" "$@"
 }
 
 error() {
-    log "--ERROR--" "${@-}"
+    log "--ERROR--" "$@"
 }
 
 get_remote_ip() {
@@ -148,6 +150,7 @@ need_command() {
     fi
 }
 
+# shellcheck disable=SC2120
 need_lxc() {
     set -eu
     if [ "$#" -gt 0 ]; then
@@ -264,6 +267,7 @@ wait_lxd_container_status() {
             ;;
     esac
     log "Waiting ${CONTAINER_STATUS_TIMEOUT} seconds for container '$1:$2' to be ${STATUS_NAME}"
+    # shellcheck disable=SC2004
     TIMEOUT_DATE="$(($(date +%s)+${CONTAINER_STATUS_TIMEOUT}))"
     
     CONTAINER_STATUS="$(lxd_container_status "$1" "$2")"
@@ -353,12 +357,15 @@ else
 fi
 export VALHEIM_PUBLICNESS_VALUE
 export TEMPORARY_OVERRIDE_FILE="${TRANSIENT_OVERRIDE_PATH}/${TEMPORARY_OVERRIDE_FILE_NAME}"
+# shellcheck disable=SC2004
 export VALHEIM_END_PORT="$((${VALHEIM_START_PORT}+2))"
 
 ### Load overrides
 if [ -r "/etc/extra_vars/extra_vars.sh" ]; then
+    # shellcheck disable=SC1091
     . /etc/extra_vars/extra_vars.sh
 fi
 if [ -r "./extra_vars.sh" ]; then
+    # shellcheck disable=SC1091
     . ./extra_vars.sh
 fi

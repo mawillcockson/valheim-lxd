@@ -1,10 +1,11 @@
 #!/bin/sh
 set -eu
 
+# shellcheck source=vars.sh
 . ../vars.sh
 
 fail() {
-    echo $1
+    echo "$1"
     exit 1
 }
 
