@@ -544,7 +544,7 @@ In my experience, sometimes the Valheim server will show up in the in-game brows
 [valheim]: <https://www.valheimgame.com/> "Main game website"
 [lxd client]: <https://linuxcontainers.org/lxd/getting-started-cli/#lxd-client> "Documentation on using lxc, the LXD Client"
 [`jq`]: <https://stedolan.github.io/jq/> "Main jq website"
-[LXD]: <https://linuxcontainers.org/lxd/introduction/> "The main LXD website"
+[LXD]: <https://linuxcontainers.org/lxd/#what-is-lxd> "about the Linux Container Daemon"
 [cygwin]: <https://cygwin.com> "Main cygwin website"
 [Git for Windows]: <https://git-scm.com/download/win> "Download Git for Windows"
 [lxd snapshots]: <https://linuxcontainers.org/lxd/docs/master/instances#snapshot-scheduling> "LXD documentation on scheduling snapshots"
